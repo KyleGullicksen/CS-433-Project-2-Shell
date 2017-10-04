@@ -64,8 +64,6 @@ int main()
     for(int index = 0; index < results.size(); ++index)
     {
         command = trim(results[index]);
-        resultCode = system(command);
-
-        cout << "ResultCode: " << resultCode << endl;
+        cout << "Command: " << command << endl;
     }
 }
