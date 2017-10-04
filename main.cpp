@@ -42,6 +42,41 @@ string trim(string str)
     return str.substr(startingIndex, (endingIndex - startingIndex) + 1);
 }
 
+void processPipedCommand(string commandLine)
+{
+    vector<string> pipedCommands;
+    boost::split(pipedCommands, commandLine, boost::is_any_of("|"));
+    string command;
+
+    for(int index = 0; index < pipedCommands.size(); ++index)
+    {
+        command = trim(pipedCommands[index]);
+        cout << "command: " << command << endl;
+    }
+}
+
+
+void processCommand(string commandLine)
+{
+    pid_t pid = fork();
+
+    if(pid == 0)
+    {
+        execvp()
+    }
+}
+
+void processCommandLine(string commandLine)
+{
+    if(!boost::contains(commandLine, "|"))
+        processPipedCommand(commandLine);
+    else
+        processCommand(commandLine);
+
+
+}
+
+
 int main()
 {
     /*
@@ -50,20 +85,18 @@ int main()
 
     string commandString = R"(ls -la | grep "Shit")";
 
+
     //split on |
 
     /*
      * for each command in the
      */
 
-    vector<string> results;
-    boost::split(results, commandString, boost::is_any_of("|"));
-    string command;
-    int resultCode;
+    vector<string> commandLines;
+    boost::split(commandLines, commandString, boost::is_any_of("\n"));
 
-    for(int index = 0; index < results.size(); ++index)
+    for(int index = 0; index < commandLines.size(); ++index)
     {
-        command = trim(results[index]);
-        cout << "Command: " << command << endl;
+        processCommandLine(commandLines[index]);
     }
 }
