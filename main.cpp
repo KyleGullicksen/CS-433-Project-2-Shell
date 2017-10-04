@@ -11,6 +11,8 @@
 #include <ctype.h>
 #include <pthread.h>
 
+#include "CommandAndOptions.h"
+
 using std::string;
 using std::vector;
 using boost::split;
@@ -40,6 +42,38 @@ string trim(string str)
     }
 
     return str.substr(startingIndex, (endingIndex - startingIndex) + 1);
+}
+
+
+//exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
+
+void handleBuiltInCommands(string commandLine)
+{
+    string cleanCommandLine = trim(commandLine);
+
+    if(cleanCommandLine == "!!")
+    {
+        //Show the most recent command is executed
+    }
+    else if(cleanCommandLine == "exit")
+    {
+        //Show
+    }
+    else if(cleanCommandLine == "exit")
+    {
+
+    }else if(cleanCommandLine == "exit")
+    {
+
+    }
+    else
+        return;
+}
+
+
+CommandAndOptions parseCommandAndOptions(string commandLine)
+{
+
 }
 
 void processPipedCommand(string commandLine)
