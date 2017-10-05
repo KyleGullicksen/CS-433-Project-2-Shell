@@ -11,8 +11,6 @@ class CommandAndOptions
 public:
     char * command;
     char * options;
-
-    
 };
 
 

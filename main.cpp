@@ -24,6 +24,8 @@ using std::deque;
 //Initialization of the deque
 deque<CommandAndOptions> commandHistory;
 
+void processCommand(CommandAndOptions commandWithOptions);
+
 string trim(string str)
 {
     int startingIndex, endingIndex;
@@ -62,22 +64,25 @@ void createHistory(char command)
 
 //exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
 
-void handleBuiltInCommands(string commandLine)
+bool handleBuiltInCommands(string commandLine)
 {
     string cleanCommandLine = trim(commandLine);
 
-    if(cleanCommandLine == "history")
+    if(cleanCommandLine == "!!")
     {
         //Show the most recent command is executed
-        displayHistory();
-    }
-    else if(cleanCommandLine == "exit")
+
+        return true;
+    } else if(cleanCommandLine == "exit")
     {
-        exit(1);
-    }
-    else if(cleanCommandLine[0] == "!")
+        //Show
+
+        return true;
+    } else if(cleanCommandLine == "exit")
     {
-        if (cleanCommandLine == "!!")
+        CommandAndOptions previousCommand;
+
+        if(cleanCommandLine == "!!")
         {
             if(commandHistory.empty())
             {
@@ -85,36 +90,60 @@ void handleBuiltInCommands(string commandLine)
                 return;
             }
             //grab and store the previous command
-            CommandAndHistory previousCommand = commandHistory.pop();
-        }
-        else //command is "!N"
+            previousCommand = commandHistory.pop_front();
+        } else //command is "!N"
         {
-           char N = cleanCommandLine[1];
-           int numOfCommands = (int)N - 48;
+            char N = cleanCommandLine[1];
+            int numOfCommands = (int) N - 48;
 
-           if(commandHistory.size() < numOfCommands)
-           {
-            cout << "Command unavailable or does not exist." << endl;
-            return;
-           }
+            if(commandHistory.size() < numOfCommands)
+            {
+                cout << "Command unavailable or does not exist." << endl;
+                return;
+            }
 
-           for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
-           {
-            commandHistory.pop();
-           }
-           CommandAndHistory previousCommand = commandHistory.front();
-        }   
-        cout << previousCommand << endl;
+            for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
+            {
+                commandHistory.pop_front();
+            }
+
+            previousCommand = commandHistory.front();
+
+
+        }
+
+
+        cout << previousCommand.command << endl;
         processCommand(previousCommand);
     }
 
-        return;
+    return true;
 }
 
 
+
+//ls-la
+
 CommandAndOptions parseCommandAndOptions(string commandLine)
 {
+    CommandAndOptions commandAndHistory;
 
+    std::size_t pos = commandLine.find("-");
+
+    //That's a command with no options
+    if(pos == -1)
+    {
+        commandAndHistory.command = &commandLine[0u];
+        return commandAndHistory;
+    }
+
+    string command = commandLine.substr(0, pos);
+    string options = commandLine.substr(pos, commandLine.size() - 1);
+
+    commandAndHistory.command = &command[0u];
+    commandAndHistory.options = &options[0u];
+
+    return commandAndHistory;
 }
 
 void processPipedCommand(string commandLine)
@@ -131,13 +160,13 @@ void processPipedCommand(string commandLine)
 }
 
 
-void processCommand(string commandLine)
+void processCommand(CommandAndOptions commandWithOptions)
 {
     pid_t pid = fork();
 
     if(pid == 0)
     {
-        execvp()
+        //execvp(commandWithOptions.command, commandWithOptions.options);
     }
 }
 
@@ -145,10 +174,11 @@ void processCommandLine(string commandLine)
 {
     if(!boost::contains(commandLine, "|"))
         processPipedCommand(commandLine);
-    else
-        processCommand(commandLine);
-
-
+    else if(!handleBuiltInCommands(commandLine))
+    {
+        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
+        processCommand(commandAndOptions);
+    }
 }
 
 
@@ -158,22 +188,28 @@ int main()
      * // ls -la | grep "Shit"
      */
 
-    string commandString = R"(ls -la | grep "Shit")";
+//    string commandString = R"(ls -la | grep "Shit")";
+//
+//
+//    //split on |
+//
+//    /*
+//     * for each command in the
+//     */
+//
+//    vector<string> commandLines;
+//    boost::split(commandLines, commandString, boost::is_any_of("\n"));
+//
+//    for(int index = 0; index < commandLines.size(); ++index)
+//    {
+//        processCommandLine(commandLines[index]);
+//    }
 
 
 
 
     //split on |
 
-    /*
-     * for each command in the
-     */
-
-    vector<string> commandLines;
-    boost::split(commandLines, commandString, boost::is_any_of("\n"));
-
-    for(int index = 0; index < commandLines.size(); ++index)
-    {
-        processCommandLine(commandLines[index]);
-    }
+    CommandAndOptions commandAndOptions = parseCommandAndOptions(testCommandLine);
+    cout << "Command: " << commandAndOptions.command << ", Options: " << commandAndOptions.options << endl;
 }
