@@ -1,6 +1,26 @@
-//
-// Created by stoffel on 10/4/17.
-//
+/*
+Created by Kyle Gullicksen and Benjamin Siegel
+Date Written: 9/25/2017
+Course: CS433
+Assignment #2
+
+This program will imititate a shell. This user will input a shell
+    command, such as ls, or mkdir, etc. Then, the program will
+    process the user inputed command and execute it. 
+
+    If the user enters a preset unique command, such as "!!"
+    or "!N", where N is an integer then the program will handle 
+    those inputs as if they were built in.
+
+    !! will display the previously entered command and execute it.
+    !N will display the Nth previously entered command and execute 
+        that command, as long a there are N previously entered 
+        commands at minimum.
+    
+    All commands that the user enters into this shell will be 
+    stored in commandHistory. The command history can be accessed 
+    via the command "history".
+*/
 
 #include <iostream>
 
@@ -52,6 +72,8 @@ string trim(string str)
 }
 
 
+//displayHistory will verify that commands have been entered 
+//then display all commands stored in the deque commandHistory.
 void displayHistory()
 {
     if(commandHistory.emty())
@@ -65,6 +87,8 @@ void displayHistory()
     }
 }
 
+//createHistory pushes the most recently entered command 
+//by the user onto the deque commandHistory.
 void createHistory(char command[])
 {
     commandHistory.push_back(command);
@@ -72,21 +96,22 @@ void createHistory(char command[])
 
 //exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
 
+/*
+handleBuiltInCommands is intended to work with commands
+that are defined in the homework problem, these commands
+are:
+    exit- exits the program and brings the user back to their
+        program or shell
+    !!- displays the most recently used user inputed command
+        and executes it.
+    !N- displays the Nth used user inputed command and executs it
+
+*/ 
 bool handleBuiltInCommands(string commandLine)
 {
     string cleanCommandLine = trim(commandLine);
 
-    if(cleanCommandLine == "!!")
-    {
-        //Show the most recent command is executed
-
-        return true;
-    } else if(cleanCommandLine == "exit")
-    {
-        //Show
-
-        return true;
-    } else if(cleanCommandLine == "exit")
+    if(cleanCommandLine == "exit")
     {
         CommandAndOptions previousCommand;
 
@@ -101,6 +126,8 @@ bool handleBuiltInCommands(string commandLine)
             previousCommand = commandHistory.pop_front();
         } else //command is "!N"
         {
+            //These next two lines grab the number from !N
+            //and converts it into the ascii number for N
             char N = cleanCommandLine[1];
             int numOfCommands = (int) N - 48;
 
@@ -116,8 +143,6 @@ bool handleBuiltInCommands(string commandLine)
             }
 
             previousCommand = commandHistory.front();
-
-
         }
 
 
@@ -172,9 +197,27 @@ void processCommand(CommandAndOptions commandWithOptions)
 {
     pid_t pid = fork();
 
+    commandAndOptions.amp = false;
+
     if(pid == 0)
     {
-        //execvp(commandWithOptions.command, commandWithOptions.options);
+        execvp(commandWithOptions.command, commandWithOptions.options);
+        cout << "Command does not exist." << endl;
+        exit(1);
+    }
+
+    else if (pid > 0)
+    {
+        if(amp == false)
+        {
+            wait(NULL);
+        }
+    }
+
+    else
+    {
+        cout << "Fork failed." << endl;
+        exit(1);
     }
 }
 
@@ -214,7 +257,7 @@ int main()
 //    }
 
 
-
+; 
 
     //split on |
 
