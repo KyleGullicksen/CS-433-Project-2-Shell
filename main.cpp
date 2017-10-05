@@ -54,7 +54,15 @@ string trim(string str)
 
 void displayHistory()
 {
-
+    if(commandHistory.emty())
+    {
+        cout << "Command history is empty or does not exist." << endl;
+        return;
+    }
+    for (int i = 0; i < commandHistory.size(); i++)
+    {
+        cout << i++ << " " << commandHistory[i] << endl;
+    }
 }
 
 void createHistory(char command)
