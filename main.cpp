@@ -6,19 +6,19 @@ Assignment #2
 
 This program will imititate a shell. This user will input a shell
     command, such as ls, or mkdir, etc. Then, the program will
-    process the user inputed command and execute it. 
+    process the user inputed command and execute it.
 
     If the user enters a preset unique command, such as "!!"
-    or "!N", where N is an integer then the program will handle 
+    or "!N", where N is an integer then the program will handle
     those inputs as if they were built in.
 
     !! will display the previously entered command and execute it.
-    !N will display the Nth previously entered command and execute 
-        that command, as long a there are N previously entered 
+    !N will display the Nth previously entered command and execute
+        that command, as long a there are N previously entered
         commands at minimum.
-    
-    All commands that the user enters into this shell will be 
-    stored in commandHistory. The command history can be accessed 
+
+    All commands that the user enters into this shell will be
+    stored in commandHistory. The command history can be accessed
     via the command "history".
 */
 
@@ -31,6 +31,7 @@ This program will imititate a shell. This user will input a shell
 #include <ctype.h>
 #include <pthread.h>
 #include <deque>
+#include <sys/wait.h>
 
 #include "CommandAndOptions.h"
 
@@ -48,7 +49,7 @@ void processCommand(CommandAndOptions commandWithOptions);
 
 string trim(string str)
 {
-    int startingIndex, endingIndex;
+    int startingIndex = 0, endingIndex = str.length() - 1;
 
     for(int index = 0; index < str.length(); ++index)
     {
@@ -59,7 +60,7 @@ string trim(string str)
         }
     }
 
-    for(int index = str.length() - 1; index > -1; ++index)
+    for(int index = str.length() - 1; index > -1; --index)
     {
         if(!isspace(str[index]))
         {
@@ -72,22 +73,22 @@ string trim(string str)
 }
 
 
-//displayHistory will verify that commands have been entered 
+//displayHistory will verify that commands have been entered
 //then display all commands stored in the deque commandHistory.
 void displayHistory()
 {
-    if(commandHistory.emty())
+    if(commandHistory.empty())
     {
         cout << "Command history is empty or does not exist." << endl;
         return;
     }
     for (int i = 0; i < commandHistory.size(); i++)
     {
-        cout << i++ << " " << commandHistory[i] << endl;
+        cout << i << " " << commandHistory[i].command << endl;
     }
 }
 
-//createHistory pushes the most recently entered command 
+//createHistory pushes the most recently entered command
 //by the user onto the deque commandHistory.
 void createHistory(char command[])
 {
@@ -106,51 +107,52 @@ are:
         and executes it.
     !N- displays the Nth used user inputed command and executs it
 
-*/ 
+*/
 bool handleBuiltInCommands(string commandLine)
 {
     string cleanCommandLine = trim(commandLine);
+    CommandAndOptions previousCommand;
 
     if(cleanCommandLine == "exit")
     {
-        CommandAndOptions previousCommand;
-
-        if(cleanCommandLine == "!!")
+        exit(0xBAD);
+    } else if(cleanCommandLine == "!!")
+    {
+        if(commandHistory.empty())
         {
-            if(commandHistory.empty())
-            {
-                cout << "History is emtpy." << endl;
-                return;
-            }
-            //grab and store the previous command
-            previousCommand = commandHistory.pop_front();
-        } else //command is "!N"
+            cout << "History is empty." << endl;
+            return true;
+        }
+        //grab and store the previous command
+        //previousCommand = commandHistory.pop_front();
+        previousCommand = commandHistory.front();
+        commandHistory.pop_front();
+
+        return true;
+
+    } else if(cleanCommandLine[0] == '!') //command is "!N"
+    {
+        //These next two lines grab the number from !N
+        //and converts it into the ascii number for N
+        char N = cleanCommandLine[1];
+        int numOfCommands = (int) N - 48;
+
+        if(commandHistory.size() < numOfCommands)
         {
-            //These next two lines grab the number from !N
-            //and converts it into the ascii number for N
-            char N = cleanCommandLine[1];
-            int numOfCommands = (int) N - 48;
-
-            if(commandHistory.size() < numOfCommands)
-            {
-                cout << "Command unavailable or does not exist." << endl;
-                return;
-            }
-
-            for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
-            {
-                commandHistory.pop_front();
-            }
-
-            previousCommand = commandHistory.front();
+            cout << "Command unavailable or does not exist." << endl;
+            return
+                true;
         }
 
+        for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
+        {
+            commandHistory.pop_front();
+        }
 
-        cout << previousCommand.command << endl;
-        processCommand(previousCommand);
-    }
-
-    return true;
+        previousCommand = commandHistory.front();
+        return true;
+    } else
+        return false;
 }
 
 
@@ -159,56 +161,84 @@ bool handleBuiltInCommands(string commandLine)
 
 CommandAndOptions parseCommandAndOptions(string commandLine)
 {
-    CommandAndOptions commandAndHistory;
+    CommandAndOptions commandWithOptions;
 
-    std::size_t pos = commandLine.find("-");
+    std::size_t pos = commandLine.find_first_of('-');
 
     //That's a command with no options
     if(pos == -1)
     {
-        commandAndHistory.command = &commandLine[0u];
-        return commandAndHistory;
+        //commandWithOptions.command = &commandLine[0u];
+        commandWithOptions.command = commandLine;
+        return commandWithOptions;
     }
 
     string command = commandLine.substr(0, pos);
-    string options = commandLine.substr(pos, commandLine.size() - 1);
 
-    commandAndHistory.command = &command[0u];
-    commandAndHistory.options = &options[0u];
+    string allOptions = commandLine.substr(pos, commandLine.length() - pos);
 
-    return commandAndHistory;
+    vector<string> options;
+    boost::split(options, allOptions, boost::is_any_of("-"));
+    string individualOption;
+
+    for(int index = 0; index < options.size(); ++index)
+    {
+        individualOption = trim(options[index]);
+
+        if(individualOption.empty())
+            continue;
+
+        commandWithOptions.options.push_back(individualOption);
+    }
+
+//    commandWithOptions.command = &command[0u];
+//    commandWithOptions.options = &options[0u];
+
+    commandWithOptions.command = command;
+    //commandWithOptions.options = options;
+
+    return commandWithOptions;
 }
 
-void processPipedCommand(string commandLine)
+char * convert(string & str)
 {
-    vector<string> pipedCommands;
-    boost::split(pipedCommands, commandLine, boost::is_any_of("|"));
-    string command;
+    char * cStyleString = new char[str.length()];
 
-    for(int index = 0; index < pipedCommands.size(); ++index)
+    for(int index = 0; index < str.length(); ++index)
     {
-        command = trim(pipedCommands[index]);
-        cout << "command: " << command << endl;
+        cStyleString[index] = str[index];
+    }
+
+    return cStyleString;
+}
+
+void build_array(char* strings[], vector<string> & vector)
+{
+    for(int index = 0; index < vector.size(); ++index)
+    {
+        strings[index] = convert(vector[index]);
     }
 }
+
 
 
 void processCommand(CommandAndOptions commandWithOptions)
 {
     pid_t pid = fork();
 
-    commandAndOptions.amp = false;
+    char* strings[] = new char*[commandWithOptions.options.size()];
+
 
     if(pid == 0)
     {
-        execvp(commandWithOptions.command, commandWithOptions.options);
+        execvp(convert(commandWithOptions.command), build_array(commandWithOptions.options));
         cout << "Command does not exist." << endl;
         exit(1);
     }
 
     else if (pid > 0)
     {
-        if(amp == false)
+        if(!commandWithOptions.amp)
         {
             wait(NULL);
         }
@@ -223,9 +253,15 @@ void processCommand(CommandAndOptions commandWithOptions)
 
 void processCommandLine(string commandLine)
 {
-    if(!boost::contains(commandLine, "|"))
-        processPipedCommand(commandLine);
-    else if(!handleBuiltInCommands(commandLine))
+//    if(!boost::contains(commandLine, "|"))
+//        processPipedCommand(commandLine);
+//    else if(!handleBuiltInCommands(commandLine))
+//    {
+//        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
+//        processCommand(commandAndOptions);
+//    }
+
+    if(!handleBuiltInCommands(commandLine))
     {
         CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
         processCommand(commandAndOptions);
@@ -248,6 +284,9 @@ int main()
 //     * for each command in the
 //     */
 //
+
+    string commandString = "ls -la -lst -moreoptions -evenmoreoptions";
+
 //    vector<string> commandLines;
 //    boost::split(commandLines, commandString, boost::is_any_of("\n"));
 //
@@ -257,10 +296,5 @@ int main()
 //    }
 
 
-; 
-
-    //split on |
-
-    CommandAndOptions commandAndOptions = parseCommandAndOptions(testCommandLine);
-    cout << "Command: " << commandAndOptions.command << ", Options: " << commandAndOptions.options << endl;
+    processCommandLine(commandString);
 }

@@ -5,12 +5,20 @@
 #ifndef INC_2_COMMANDANDOPTIONS_H
 #define INC_2_COMMANDANDOPTIONS_H
 
+#include <string>
+#include <vector>
+
+using std::string;
+using std::vector;
+
 
 class CommandAndOptions
 {
 public:
-    char * command;
-    char * options;
+    string command;
+    vector<string> options;
+    //char * optionsCharArray[];]
+    bool amp = false;
 };
 
 
