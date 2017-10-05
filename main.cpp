@@ -65,7 +65,7 @@ void displayHistory()
     }
 }
 
-void createHistory(char command)
+void createHistory(char command[])
 {
     commandHistory.push_back(command);
 }
