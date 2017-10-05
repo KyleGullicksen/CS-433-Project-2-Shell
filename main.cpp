@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <deque>
 
 #include "CommandAndOptions.h"
 
@@ -18,6 +19,10 @@ using std::vector;
 using boost::split;
 using std::cout;
 using std::endl;
+using std::deque;
+
+//Initialization of the deque
+deque<CommandAndOptions> commandHistory;
 
 string trim(string str)
 {
@@ -45,28 +50,64 @@ string trim(string str)
 }
 
 
+void displayHistory()
+{
+
+}
+
+void createHistory(char command)
+{
+    commandHistory.push_back(command);
+}
+
 //exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
 
 void handleBuiltInCommands(string commandLine)
 {
     string cleanCommandLine = trim(commandLine);
 
-    if(cleanCommandLine == "!!")
+    if(cleanCommandLine == "history")
     {
         //Show the most recent command is executed
+        displayHistory();
     }
     else if(cleanCommandLine == "exit")
     {
-        //Show
+        exit(1);
     }
-    else if(cleanCommandLine == "exit")
+    else if(cleanCommandLine[0] == "!")
     {
+        if (cleanCommandLine == "!!")
+        {
+            if(commandHistory.empty())
+            {
+                cout << "History is emtpy." << endl;
+                return;
+            }
+            //grab and store the previous command
+            CommandAndHistory previousCommand = commandHistory.pop();
+        }
+        else //command is "!N"
+        {
+           char N = cleanCommandLine[1];
+           int numOfCommands = (int)N - 48;
 
-    }else if(cleanCommandLine == "exit")
-    {
+           if(commandHistory.size() < numOfCommands)
+           {
+            cout << "Command unavailable or does not exist." << endl;
+            return;
+           }
 
+           for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
+           {
+            commandHistory.pop();
+           }
+           CommandAndHistory previousCommand = commandHistory.front();
+        }   
+        cout << previousCommand << endl;
+        processCommand(previousCommand);
     }
-    else
+
         return;
 }
 
@@ -118,6 +159,8 @@ int main()
      */
 
     string commandString = R"(ls -la | grep "Shit")";
+
+
 
 
     //split on |
