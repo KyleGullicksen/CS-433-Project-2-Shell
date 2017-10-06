@@ -51,7 +51,7 @@ int processCount = 0;
 int maxProcessCount = 50;
 
 
-FILE * processCommand(CommandAndOptions commandWithOptions);
+void processCommand(CommandAndOptions commandWithOptions);
 
 string trim(string str)
 {
@@ -225,8 +225,10 @@ void build_array(char* strings[], vector<string> & vector)
 }
 
 
-FILE * processCommand(CommandAndOptions commandWithOptions)
+void processCommand(CommandAndOptions commandWithOptions)
 {
+    int pid = fork();
+
     if(commandWithOptions.cachedCommand == nullptr)
         commandWithOptions.cachedCommand = convert(commandWithOptions.command);
 
@@ -246,30 +248,30 @@ FILE * processCommand(CommandAndOptions commandWithOptions)
 //    close(fds[1]);
 //    return fdopen(fds[0], "r");
 
-//    if(pid == 0)
-//    {
-//        execvp(commandWithOptions.cachedCommand, optionStrings);
-//        cout << "Command does not exist." << endl;
-//        exit(1);
-//    }
-//
-//    else if (pid > 0)
-//    {
-//        if(!commandWithOptions.amp)
-//        {
-//            wait(NULL);
-//        }
-//    }
-//
-//    else
-//    {
-//        cout << "Fork failed." << endl;
-//        exit(1);
-//    }
+    if(pid == 0)
+    {
+        execvp(commandWithOptions.cachedCommand, optionStrings);
+        cout << "Command does not exist." << endl;
+        exit(1);
+    }
+
+    else if (pid > 0)
+    {
+        if(!commandWithOptions.amp)
+        {
+            wait(NULL);
+        }
+    }
+
+    else
+    {
+        cout << "Fork failed." << endl;
+        exit(1);
+    }
 }
 
 //adapted from: http://www.sw-at.com/blog/2011/03/23/popen-execute-shell-command-from-cc/
-
+//Didn't work
 void outputResultOfCommand(FILE * commandStream)
 {
     char buff[1024];
@@ -285,8 +287,8 @@ void processCommandLine(string commandLine)
     if(!handleBuiltInCommands(commandLine))
     {
         CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
-        FILE * commandStream = processCommand(commandAndOptions);
-        outputResultOfCommand(commandStream);
+        processCommand(commandAndOptions);
+        //outputResultOfCommand(commandStream);
     }
 }
 
