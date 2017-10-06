@@ -17,7 +17,9 @@ class CommandAndOptions
 public:
     string command;
     vector<string> options;
-    //char * optionsCharArray[];]
+
+    char * cachedCommand = nullptr;
+
     bool amp = false;
 };
 

@@ -32,6 +32,9 @@ This program will imititate a shell. This user will input a shell
 #include <pthread.h>
 #include <deque>
 #include <sys/wait.h>
+#include <chrono>
+#include <thread>
+#include <stdio.h>
 
 #include "CommandAndOptions.h"
 
@@ -44,8 +47,11 @@ using std::deque;
 
 //Initialization of the deque
 deque<CommandAndOptions> commandHistory;
+int processCount = 0;
+int maxProcessCount = 50;
 
-void processCommand(CommandAndOptions commandWithOptions);
+
+FILE * processCommand(CommandAndOptions commandWithOptions);
 
 string trim(string str)
 {
@@ -92,7 +98,7 @@ void displayHistory()
 //by the user onto the deque commandHistory.
 void createHistory(char command[])
 {
-    commandHistory.push_back(command);
+    //commandHistory.push_back(command);
 }
 
 //exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
@@ -191,23 +197,23 @@ CommandAndOptions parseCommandAndOptions(string commandLine)
         commandWithOptions.options.push_back(individualOption);
     }
 
-//    commandWithOptions.command = &command[0u];
-//    commandWithOptions.options = &options[0u];
-
     commandWithOptions.command = command;
-    //commandWithOptions.options = options;
+
+    //Is there am amp?
+    std::size_t ampPos = commandLine.find('&');
+
+    if(ampPos != -1)
+        commandWithOptions.amp = true;
 
     return commandWithOptions;
 }
 
 char * convert(string & str)
 {
-    char * cStyleString = new char[str.length()];
+    string cleanString = trim(str);
 
-    for(int index = 0; index < str.length(); ++index)
-    {
-        cStyleString[index] = str[index];
-    }
+    char * cStyleString = new char[cleanString.length()];
+    std::strcpy (cStyleString, str.c_str());
 
     return cStyleString;
 }
@@ -215,86 +221,78 @@ char * convert(string & str)
 void build_array(char* strings[], vector<string> & vector)
 {
     for(int index = 0; index < vector.size(); ++index)
-    {
         strings[index] = convert(vector[index]);
-    }
 }
 
 
-
-void processCommand(CommandAndOptions commandWithOptions)
+FILE * processCommand(CommandAndOptions commandWithOptions)
 {
-    pid_t pid = fork();
+    if(commandWithOptions.cachedCommand == nullptr)
+        commandWithOptions.cachedCommand = convert(commandWithOptions.command);
 
-    char* strings[] = new char*[commandWithOptions.options.size()];
+    char * optionStrings[commandWithOptions.options.size()] = {0};
+    build_array(optionStrings, commandWithOptions.options);
 
+//    //Adapted from: https://stackoverflow.com/questions/762200/how-to-capture-output-of-execvp
+//    int fds[2];
+//    pipe(fds);
+//    if (fork() == 0) {
+//        close(fds[0]);
+//        dup2(1, fds[1]);
+//        close(fds[1]);
+//        execvp(commandWithOptions.cachedCommand, optionStrings);
+//        exit(-1);
+//    }
+//    close(fds[1]);
+//    return fdopen(fds[0], "r");
 
-    if(pid == 0)
-    {
-        execvp(convert(commandWithOptions.command), build_array(commandWithOptions.options));
-        cout << "Command does not exist." << endl;
-        exit(1);
+//    if(pid == 0)
+//    {
+//        execvp(commandWithOptions.cachedCommand, optionStrings);
+//        cout << "Command does not exist." << endl;
+//        exit(1);
+//    }
+//
+//    else if (pid > 0)
+//    {
+//        if(!commandWithOptions.amp)
+//        {
+//            wait(NULL);
+//        }
+//    }
+//
+//    else
+//    {
+//        cout << "Fork failed." << endl;
+//        exit(1);
+//    }
+}
+
+//adapted from: http://www.sw-at.com/blog/2011/03/23/popen-execute-shell-command-from-cc/
+
+void outputResultOfCommand(FILE * commandStream)
+{
+    char buff[1024];
+
+    while(fgets(buff, sizeof(buff), commandStream)!=NULL){
+        printf("%s", buff);
     }
-
-    else if (pid > 0)
-    {
-        if(!commandWithOptions.amp)
-        {
-            wait(NULL);
-        }
-    }
-
-    else
-    {
-        cout << "Fork failed." << endl;
-        exit(1);
-    }
+    pclose(commandStream);
 }
 
 void processCommandLine(string commandLine)
 {
-//    if(!boost::contains(commandLine, "|"))
-//        processPipedCommand(commandLine);
-//    else if(!handleBuiltInCommands(commandLine))
-//    {
-//        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
-//        processCommand(commandAndOptions);
-//    }
-
     if(!handleBuiltInCommands(commandLine))
     {
         CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
-        processCommand(commandAndOptions);
+        FILE * commandStream = processCommand(commandAndOptions);
+        outputResultOfCommand(commandStream);
     }
 }
 
 
 int main()
 {
-    /*
-     * // ls -la | grep "Shit"
-     */
-
-//    string commandString = R"(ls -la | grep "Shit")";
-//
-//
-//    //split on |
-//
-//    /*
-//     * for each command in the
-//     */
-//
-
-    string commandString = "ls -la -lst -moreoptions -evenmoreoptions";
-
-//    vector<string> commandLines;
-//    boost::split(commandLines, commandString, boost::is_any_of("\n"));
-//
-//    for(int index = 0; index < commandLines.size(); ++index)
-//    {
-//        processCommandLine(commandLines[index]);
-//    }
-
-
+    string commandString = "echo \"Test\"";
     processCommandLine(commandString);
 }
