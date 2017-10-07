@@ -52,7 +52,7 @@ int processCount = 0;
 int maxProcessCount = 50;
 int maxSleepCount = 5;
 
-void executeCommand(CommandAndOptions commandWithOptions);
+void executeCommand(CommandAndOptions & commandWithOptions);
 
 bool strContains(string & str, string string1)
 {
@@ -169,7 +169,7 @@ bool handleBuiltInCommands(string & commandLine)
         return false;
 }
 
-CommandAndOptions parseCommandAndOptions(string commandLine)
+CommandAndOptions parseCommandAndOptions(string & commandLine)
 {
     CommandAndOptions commandWithOptions;
     commandWithOptions.orginalCommandLine = commandLine;
@@ -204,7 +204,7 @@ CommandAndOptions parseCommandAndOptions(string commandLine)
 }
 
 
-void executeCommand(CommandAndOptions commandWithOptions)
+void executeCommand(CommandAndOptions & commandWithOptions)
 {
     //Don't execute a new command until some of the others have finished executing
     for(int currSleepCount = 0; processCount >= maxProcessCount && currSleepCount < maxSleepCount; currSleepCount++)
@@ -238,7 +238,7 @@ void executeCommand(CommandAndOptions commandWithOptions)
     }
 }
 
-string removeNewlines(string commandLine)
+string removeNewlines(string & commandLine)
 {
     string str = "";
 
@@ -253,7 +253,7 @@ string removeNewlines(string commandLine)
     return str;
 }
 
-void processCommandLine(string commandLine)
+void processCommandLine(string & commandLine)
 {
     string cleanString = removeNewlines(commandLine);
 
