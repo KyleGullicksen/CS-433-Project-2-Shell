@@ -35,23 +35,26 @@ This program will imititate a shell. This user will input a shell
 #include <chrono>
 #include <thread>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <cstring>
+#include <cstdlib>
 
 #include "CommandAndOptions.h"
 
-using std::string;
-using std::vector;
 using boost::split;
-using std::cout;
-using std::endl;
-using std::deque;
+
+using namespace std;
+
 
 //Initialization of the deque
 deque<CommandAndOptions> commandHistory;
 int processCount = 0;
 int maxProcessCount = 50;
+bool currRunning = false;
 
 
-void processCommand(CommandAndOptions commandWithOptions);
+
 
 string trim(string str)
 {
@@ -78,6 +81,22 @@ string trim(string str)
     return str.substr(startingIndex, (endingIndex - startingIndex) + 1);
 }
 
+
+char * convert(string & str)
+{
+    string cleanString = trim(str);
+
+    char * cStyleString = new char[cleanString.length()];
+    std::strcpy (cStyleString, str.c_str());
+
+    return cStyleString;
+}
+
+void build_array(char* strings[], vector<string> & vector)
+{
+    for(int index = 0; index < vector.size(); ++index)
+        strings[index] = convert(vector[index]);
+}
 
 //displayHistory will verify that commands have been entered
 //then display all commands stored in the deque commandHistory.
@@ -121,7 +140,7 @@ bool handleBuiltInCommands(string commandLine)
 
     if(cleanCommandLine == "exit")
     {
-        processRunning = false;
+        currRunning = false;
         exit(0xBAD);
     } else if(cleanCommandLine == "!!")
     {
@@ -166,75 +185,96 @@ bool handleBuiltInCommands(string commandLine)
 
 //ls-la
 
-CommandAndOptions parseCommandAndOptions(string commandLine)
+CommandAndOptions parseCommandAndOptions(string commandLine, char * args[])
 {
     CommandAndOptions commandWithOptions;
 
-    std::size_t pos = commandLine.find_first_of('-');
+//    std::size_t pos = commandLine.find('-');
+//
+//    //That's a command with no options
+//    if(pos == -1)
+//    {
+//        commandWithOptions.command = commandLine;
+//        return commandWithOptions;
+//    }
+//
+//    string command = commandLine.substr(0, pos);
+//
+//    string allOptions = commandLine.substr(pos, commandLine.length() - pos);
+//
+//    vector<string> options;
+//    boost::split(options, allOptions, boost::is_any_of("-"));
+//    string individualOption;
+//
+//    for(int index = 0; index < options.size(); ++index)
+//    {
+//        individualOption = trim(options[index]);
+//
+//        if(individualOption.empty())
+//            continue;
+//
+//        individualOption = "-" + individualOption;
+//        cout << "Individual option: " << individualOption << endl;
+//
+//        commandWithOptions.options.push_back(individualOption);
+//    }
+//
+//    commandWithOptions.command = command;
+//
+
+    std::size_t pos = commandLine.find('-');
 
     //That's a command with no options
     if(pos == -1)
     {
-        //commandWithOptions.command = &commandLine[0u];
         commandWithOptions.command = commandLine;
+        args[0] = NULL;
         return commandWithOptions;
     }
 
     string command = commandLine.substr(0, pos);
-
-    string allOptions = commandLine.substr(pos, commandLine.length() - pos);
-
-    vector<string> options;
-    boost::split(options, allOptions, boost::is_any_of("-"));
-    string individualOption;
-
-    for(int index = 0; index < options.size(); ++index)
-    {
-        individualOption = trim(options[index]);
-
-        if(individualOption.empty())
-            continue;
-
-        commandWithOptions.options.push_back(individualOption);
-    }
-
+    command = trim(command);
     commandWithOptions.command = command;
+
+    char * commandLineCStyle = convert(commandLine);
+    int i = 0;
+
+    char * p = strtok(commandLineCStyle, " ");
+
+    while(p != NULL)
+    {
+        args[i] = p;
+        p = strtok(NULL, " ");
+        i++;
+    }
 
     //Is there am amp?
     std::size_t ampPos = commandLine.find('&');
 
-    if(ampPos != -1)
+    if(ampPos != -1) {
         commandWithOptions.amp = true;
+        args[i - 1] = NULL;
+    } else
+    {
+        args[i] = NULL;
+        commandWithOptions.amp = false;
+    }
+
 
     return commandWithOptions;
 }
 
-char * convert(string & str)
+
+void processCommand(CommandAndOptions commandWithOptions, char * args[])
 {
-    string cleanString = trim(str);
-
-    char * cStyleString = new char[cleanString.length()];
-    std::strcpy (cStyleString, str.c_str());
-
-    return cStyleString;
-}
-
-void build_array(char* strings[], vector<string> & vector)
-{
-    for(int index = 0; index < vector.size(); ++index)
-        strings[index] = convert(vector[index]);
-}
-
-
-void processCommand(CommandAndOptions commandWithOptions)
-{
-    int pid = fork();
+    pid_t pid = fork();
 
     if(commandWithOptions.cachedCommand == nullptr)
         commandWithOptions.cachedCommand = convert(commandWithOptions.command);
 
-    char * optionStrings[commandWithOptions.options.size()] = {0};
-    build_array(optionStrings, commandWithOptions.options);
+//    char * optionStrings[commandWithOptions.options.size() + 1] = {0};
+//    build_array(optionStrings, commandWithOptions.options);
+
 
 //    //Adapted from: https://stackoverflow.com/questions/762200/how-to-capture-output-of-execvp
 //    int fds[2];
@@ -249,10 +289,11 @@ void processCommand(CommandAndOptions commandWithOptions)
 //    close(fds[1]);
 //    return fdopen(fds[0], "r");
 
+    cout << "PID: " << pid << endl;
+
     if(pid == 0)
     {
-        execvp(commandWithOptions.cachedCommand, optionStrings);
-        cout << "Command does not exist." << endl;
+        execvp(commandWithOptions.cachedCommand, args);
         exit(1);
     }
 
@@ -260,7 +301,9 @@ void processCommand(CommandAndOptions commandWithOptions)
     {
         if(!commandWithOptions.amp)
         {
+            cout << " valid command 2" << endl;
             wait(NULL);
+            cout << " valid command 3" << endl;
         }
     }
 
@@ -271,40 +314,47 @@ void processCommand(CommandAndOptions commandWithOptions)
     }
 }
 
-//adapted from: http://www.sw-at.com/blog/2011/03/23/popen-execute-shell-command-from-cc/
-//Didn't work
-void outputResultOfCommand(FILE * commandStream)
+string purgeNewlines(string commandLine)
 {
-    char buff[1024];
+    string str = "";
 
-    while(fgets(buff, sizeof(buff), commandStream)!=NULL){
-        printf("%s", buff);
+    for(int index = 0; index < commandLine.size(); ++index)
+    {
+        if(commandLine[index] == '\n' || commandLine[index] == '\r')
+            continue;
+
+        str.push_back(commandLine[index]);
     }
-    pclose(commandStream);
+
+    return str;
 }
 
-void processCommandLine(string commandLine)
+void processCommandLine(string commandLine, char * args[])
 {
+    cout << "CommandLine: " << commandLine << endl;
+    string cleanString = purgeNewlines(commandLine);
+    cout << "CommandLine Clean: " << cleanString << endl;
+
     if(!handleBuiltInCommands(commandLine))
     {
-        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
-        processCommand(commandAndOptions);
-        //outputResultOfCommand(commandStream);
+        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine, args);
+        processCommand(commandAndOptions, args);
     }
 }
 
 
 int main()
 {
-    bool processRunning = true;
     string userInput = "";
-    string commandString = "echo \"Test\"";
-    processCommandLine(commandString);
+    currRunning = true;
 
-    while(processRunning = true)
+    char * args[500];
+
+    while(currRunning)
     {
-        std::cout << "osh> ";
-        std::cin >> userInput;
-        processCommandLine(userInput);
+        cout << "osh> ";
+        getline(cin, userInput);
+        processCommandLine(userInput, args);
     }
+
 }
