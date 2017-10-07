@@ -121,7 +121,7 @@ bool handleBuiltInCommands(string commandLine)
 
     if(cleanCommandLine == "exit")
     {
-        exit(0xBAD);
+        process = false;
     } else if(cleanCommandLine == "!!")
     {
         if(commandHistory.empty())
@@ -296,5 +296,15 @@ void processCommandLine(string commandLine)
 int main()
 {
     string commandString = "echo \"Test\"";
+
+    bool process = true;
+    string userInput = "";
+    while(process = true)//user input != exit
+    {
+    cout << "osh> ";
+    cin >> userInput;
+    processCommandLine(userInput);
+    cout << endl;
+    }
     processCommandLine(commandString);
 }
