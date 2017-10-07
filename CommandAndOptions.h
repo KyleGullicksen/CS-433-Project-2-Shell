@@ -6,21 +6,16 @@
 #define INC_2_COMMANDANDOPTIONS_H
 
 #include <string>
-#include <vector>
 
 using std::string;
-using std::vector;
-
 
 class CommandAndOptions
 {
 public:
-    string command;
-    vector<string> options;
-
-    char * cachedCommand = nullptr;
-
+    char * command = nullptr;
+    char * args[500];
     bool amp = false;
+    string orginalCommandLine;
 };
 
 

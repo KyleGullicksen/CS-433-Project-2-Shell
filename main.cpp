@@ -42,21 +42,27 @@ This program will imititate a shell. This user will input a shell
 
 #include "CommandAndOptions.h"
 
-using boost::split;
-
 using namespace std;
 
+#define MAX_ARG_LEN = 500
 
 //Initialization of the deque
 deque<CommandAndOptions> commandHistory;
 int processCount = 0;
 int maxProcessCount = 50;
-bool currRunning = false;
+int maxSleepCount = 5;
 
+void executeCommand(CommandAndOptions commandWithOptions);
 
+bool strContains(string & str, string string1)
+{
+    unsigned long pos = str.find(string1);
 
+    return
+        pos != -1;
+}
 
-string trim(string str)
+string trim(string & str)
 {
     int startingIndex = 0, endingIndex = str.length() - 1;
 
@@ -92,33 +98,17 @@ char * convert(string & str)
     return cStyleString;
 }
 
-void build_array(char* strings[], vector<string> & vector)
-{
-    for(int index = 0; index < vector.size(); ++index)
-        strings[index] = convert(vector[index]);
-}
-
 //displayHistory will verify that commands have been entered
 //then display all commands stored in the deque commandHistory.
 void displayHistory()
 {
     if(commandHistory.empty())
-    {
-        cout << "Command history is empty or does not exist." << endl;
-        return;
-    }
-    for (int i = 0; i < commandHistory.size(); i++)
-    {
-        cout << i << " " << commandHistory[i].command << endl;
-    }
+        cout << "No commands have been executed!" << endl;
+    else
+        for(int i = commandHistory.size() - 1; i > -1; i--)
+            cout << i << " " << commandHistory[i].orginalCommandLine << endl;
 }
 
-//createHistory pushes the most recently entered command
-//by the user onto the deque commandHistory.
-void createHistory(char command[])
-{
-    //commandHistory.push_back(command);
-}
 
 //exit, history, !!, !n (!1 executes the most recent, !2 executes the 2 most recent commands
 
@@ -133,26 +123,20 @@ are:
     !N- displays the Nth used user inputed command and executs it
 
 */
-bool handleBuiltInCommands(string commandLine)
+bool handleBuiltInCommands(string & commandLine)
 {
     string cleanCommandLine = trim(commandLine);
-    CommandAndOptions previousCommand;
 
-    if(cleanCommandLine == "exit")
+    if(cleanCommandLine == "!!")
     {
-        currRunning = false;
-        exit(0xBAD);
-    } else if(cleanCommandLine == "!!")
-    {
-        if(commandHistory.empty())
-        {
-            cout << "History is empty." << endl;
+        if(commandHistory.empty()) {
+            cout << "No commands have been executed!" << endl;
             return true;
         }
-        //grab and store the previous command
-        //previousCommand = commandHistory.pop_front();
-        previousCommand = commandHistory.front();
-        commandHistory.pop_front();
+
+        CommandAndOptions mostRecentCommand = commandHistory.front();
+        cout << "Executing [" << mostRecentCommand.orginalCommandLine << "]" << endl;
+        executeCommand(mostRecentCommand);
 
         return true;
 
@@ -165,76 +149,30 @@ bool handleBuiltInCommands(string commandLine)
 
         if(commandHistory.size() < numOfCommands)
         {
-            cout << "Command unavailable or does not exist." << endl;
-            return
-                true;
+            cout << numOfCommands << " commands have not yet been executed!" << endl;
+            return true;
         }
 
-        for(int i = 0; i < commandHistory.size() && i < numOfCommands; i++)
-        {
-            commandHistory.pop_front();
-        }
+        cout << "numOfCommands: " << numOfCommands << endl;
+        CommandAndOptions desiredCommand = commandHistory.at(numOfCommands - 1);
+        cout << "Executing [" << desiredCommand.orginalCommandLine << "]" << endl;
+        executeCommand(desiredCommand);
 
-        previousCommand = commandHistory.front();
         return true;
-    } else
+
+    } else if(strContains(cleanCommandLine, "history"))
+    {
+        displayHistory();
+        return true;
+    }
+    else
         return false;
 }
 
-
-
-//ls-la
-
-CommandAndOptions parseCommandAndOptions(string commandLine, char * args[])
+CommandAndOptions parseCommandAndOptions(string commandLine)
 {
     CommandAndOptions commandWithOptions;
-
-//    std::size_t pos = commandLine.find('-');
-//
-//    //That's a command with no options
-//    if(pos == -1)
-//    {
-//        commandWithOptions.command = commandLine;
-//        return commandWithOptions;
-//    }
-//
-//    string command = commandLine.substr(0, pos);
-//
-//    string allOptions = commandLine.substr(pos, commandLine.length() - pos);
-//
-//    vector<string> options;
-//    boost::split(options, allOptions, boost::is_any_of("-"));
-//    string individualOption;
-//
-//    for(int index = 0; index < options.size(); ++index)
-//    {
-//        individualOption = trim(options[index]);
-//
-//        if(individualOption.empty())
-//            continue;
-//
-//        individualOption = "-" + individualOption;
-//        cout << "Individual option: " << individualOption << endl;
-//
-//        commandWithOptions.options.push_back(individualOption);
-//    }
-//
-//    commandWithOptions.command = command;
-//
-
-    std::size_t pos = commandLine.find('-');
-
-    //That's a command with no options
-    if(pos == -1)
-    {
-        commandWithOptions.command = commandLine;
-        args[0] = NULL;
-        return commandWithOptions;
-    }
-
-    string command = commandLine.substr(0, pos);
-    command = trim(command);
-    commandWithOptions.command = command;
+    commandWithOptions.orginalCommandLine = commandLine;
 
     char * commandLineCStyle = convert(commandLine);
     int i = 0;
@@ -243,7 +181,7 @@ CommandAndOptions parseCommandAndOptions(string commandLine, char * args[])
 
     while(p != NULL)
     {
-        args[i] = p;
+        commandWithOptions.args[i] = p;
         p = strtok(NULL, " ");
         i++;
     }
@@ -253,47 +191,34 @@ CommandAndOptions parseCommandAndOptions(string commandLine, char * args[])
 
     if(ampPos != -1) {
         commandWithOptions.amp = true;
-        args[i - 1] = NULL;
+        commandWithOptions.args[i - 1] = NULL;
     } else
     {
-        args[i] = NULL;
+        commandWithOptions.args[i] = NULL;
         commandWithOptions.amp = false;
     }
 
+    commandWithOptions.command = commandWithOptions.args[0];
 
     return commandWithOptions;
 }
 
 
-void processCommand(CommandAndOptions commandWithOptions, char * args[])
+void executeCommand(CommandAndOptions commandWithOptions)
 {
+    //Don't execute a new command until some of the others have finished executing
+    for(int currSleepCount = 0; processCount >= maxProcessCount && currSleepCount < maxSleepCount; currSleepCount++)
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    //Add the command to the command history history
+    commandHistory.push_front(commandWithOptions);
+
     pid_t pid = fork();
-
-    if(commandWithOptions.cachedCommand == nullptr)
-        commandWithOptions.cachedCommand = convert(commandWithOptions.command);
-
-//    char * optionStrings[commandWithOptions.options.size() + 1] = {0};
-//    build_array(optionStrings, commandWithOptions.options);
-
-
-//    //Adapted from: https://stackoverflow.com/questions/762200/how-to-capture-output-of-execvp
-//    int fds[2];
-//    pipe(fds);
-//    if (fork() == 0) {
-//        close(fds[0]);
-//        dup2(1, fds[1]);
-//        close(fds[1]);
-//        execvp(commandWithOptions.cachedCommand, optionStrings);
-//        exit(-1);
-//    }
-//    close(fds[1]);
-//    return fdopen(fds[0], "r");
-
-    cout << "PID: " << pid << endl;
 
     if(pid == 0)
     {
-        execvp(commandWithOptions.cachedCommand, args);
+        execvp(commandWithOptions.command, commandWithOptions.args);
+        processCount++;
         exit(1);
     }
 
@@ -301,9 +226,8 @@ void processCommand(CommandAndOptions commandWithOptions, char * args[])
     {
         if(!commandWithOptions.amp)
         {
-            cout << " valid command 2" << endl;
             wait(NULL);
-            cout << " valid command 3" << endl;
+            processCount--;
         }
     }
 
@@ -314,7 +238,7 @@ void processCommand(CommandAndOptions commandWithOptions, char * args[])
     }
 }
 
-string purgeNewlines(string commandLine)
+string removeNewlines(string commandLine)
 {
     string str = "";
 
@@ -329,16 +253,14 @@ string purgeNewlines(string commandLine)
     return str;
 }
 
-void processCommandLine(string commandLine, char * args[])
+void processCommandLine(string commandLine)
 {
-    cout << "CommandLine: " << commandLine << endl;
-    string cleanString = purgeNewlines(commandLine);
-    cout << "CommandLine Clean: " << cleanString << endl;
+    string cleanString = removeNewlines(commandLine);
 
     if(!handleBuiltInCommands(commandLine))
     {
-        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine, args);
-        processCommand(commandAndOptions, args);
+        CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
+        executeCommand(commandAndOptions);
     }
 }
 
@@ -346,15 +268,20 @@ void processCommandLine(string commandLine, char * args[])
 int main()
 {
     string userInput = "";
-    currRunning = true;
+    bool shouldAskForMoreInput = true;
 
-    char * args[500];
-
-    while(currRunning)
+    while(shouldAskForMoreInput)
     {
         cout << "osh> ";
         getline(cin, userInput);
-        processCommandLine(userInput, args);
+
+        //Did the user exit the current terminal session?
+        if(strContains(userInput, "exit")) {
+            shouldAskForMoreInput = false;
+            exit(0xBAD);
+        }
+        else
+            processCommandLine(userInput);
     }
 
 }
