@@ -121,8 +121,8 @@ bool handleBuiltInCommands(string commandLine)
 
     if(cleanCommandLine == "exit")
     {
-        exit(0xBAD);
         processRunning = false;
+        exit(0xBAD);
     } else if(cleanCommandLine == "!!")
     {
         if(commandHistory.empty())
