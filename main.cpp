@@ -219,6 +219,7 @@ void executeCommand(CommandAndOptions & commandWithOptions)
     {
         execvp(commandWithOptions.command, commandWithOptions.args);
         processCount++;
+        cout << "This command does not exit or invalid command." << endl;
         exit(1);
     }
 
