@@ -1,0 +1,40 @@
+1.  16 processes are created when running the program in 3.32. This is because when the program first begins, there is the initial process, p0. By duplicating p0, it creates four processes, p1, p2, p3, and p4. After the first fork, there are three more forks to execute. P1 will execute the fork and create processes p5, p6, and p7. Then there are 8 more processes that will be created, adding up to a total of 16. p5 will have children of p11 and p12, with p11 having p16. P2 will have children p8 and p9 with p8 having child p14. Finally, p3 will have a child of p10.
+
+2. 	Line A = “child: pid = 0”
+	Line B = “child: pid1 = 2603”
+	Line C = “parent: pid = 2603”
+	Line D = “parent: pid1 = 2600”
+
+3. 	X =	CHILD: 0
+		CHILD: -1
+		CHILD: -4
+		CHILD: -9
+		CHILD: -16
+	Y = 	PARENT: 0
+		PARENT: 1
+		PARENT: 2
+		PARENT: 3
+		PARENT: 4
+
+4.
+	(a) A benefit of synchronous communication is that it allows a rendezvous between the sender and receiver. A benefit is also that it sends the message and resumes operation. A disadvantage is that it is more complicated since it requires kernel-level buffering.
+
+	(b) An advantage of automatic buffering is that is has unbounded capacity, being, the queue has an potentially unlimited length. Explicit buffering has the disadvantage of having a zero capacity, being, a maximum length of zero.
+
+	(c)Send by copy can handle synchronization issues but it does not allow the receiver to change the state of the parameter. Send by reference, on the other hand, allows the receiver to alter the state of the parameter.
+
+	(d)A disadvantage of fixed-size messages are buffering but an advantage is that they are easier to implement at kernel-level. Variable-sized are more complex at kernel-level.
+
+5.
+	(a)5. The parent process forks and creates p1. Then another process from the parent is created, p2. Then, three processes, p3, p4, and p5 are created from the parent, p1, and p2 processes, after the if statement.
+	(b)2.  The processes p1 and p2 will create a thread since p2 is created inside the if statement and p1 is is executed in the if statement.
+
+6.  Line C = 5
+	Line P = 0
+
+7.
+	(a) There will be processors that are going to sit idle since the there are fewer kernels, and they can only take one process at a time
+
+	(b) All of the processors are running concurrently with the number of kernel threads.
+
+	(c)If there are more kernel threads than processors, and if there is a kernel thread that is ready to execute, it will be switched with any blocked kernel threads.
