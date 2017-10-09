@@ -253,5 +253,7 @@ int main()
             exit(0xBAD);
         } else
             processCommandLine(userInput);
+
+        //detect me changes
     }
 }
