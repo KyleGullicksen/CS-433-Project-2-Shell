@@ -38,7 +38,7 @@ char *Shell::convert(string &str)
     string cleanString = trim(str);
 
     char *cStyleString = new char[cleanString.length()];
-    std::strcpy(cStyleString, str.c_str());
+    std::strcpy(cStyleString, cleanString.c_str());
 
     return cStyleString;
 }
@@ -194,4 +194,8 @@ void Shell::startNewShellSession()
         } else
             processCommandLine(userInput);
     }
+}
+
+Shell::~Shell()
+{
 }

@@ -45,6 +45,8 @@ public:
     void startNewShellSession();
 
     Shell();
+
+    virtual ~Shell();
 };
 
 

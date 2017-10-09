@@ -12,6 +12,10 @@ public:
     char * args[500];
     bool amp = false;
     string orginalCommandLine;
+
+    virtual ~CommandAndOptions();
+
+    CommandAndOptions();
 };
 
 
