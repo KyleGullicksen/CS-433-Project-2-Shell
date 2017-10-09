@@ -1,6 +1,11 @@
-//
-// Created by stoffel on 10/8/17.
-//
+/*
+Created by Kyle Gullicksen and Benjamin Siegel
+Date Written: 9/25/2017
+Course: CS433
+Assignment #2
+
+Shell.h; implementation of our Shell
+*/
 
 #ifndef INC_2_SHELL_H
 #define INC_2_SHELL_H

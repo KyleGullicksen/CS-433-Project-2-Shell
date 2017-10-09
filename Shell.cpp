@@ -1,9 +1,34 @@
-//
-// Created by stoffel on 10/8/17.
-//
+/*
+Created by Kyle Gullicksen and Benjamin Siegel
+Date Written: 9/25/2017
+Course: CS433
+Assignment #2
+
+This program will imitate a shell. This user will input a shell
+    command, such as ls, or mkdir, etc. Then, the program will
+    process the user inputted command and execute it.
+
+    If the user enters a preset unique command, such as "!!"
+    or "!N", where N is an integer then the program will handle
+    those inputs as if they were built in.
+
+    !! will display the previously entered command and execute it.
+    !N will display the Nth previously entered command and execute
+        that command, as long a there are N previously entered
+        commands at minimum.
+
+    All commands that the user enters into this shell will be
+    stored in commandHistory. The command history can be accessed
+    via the command "history".
+
+Shell.cpp; contains the implementations of all of our functions
+*/
+
+
 
 #include "Shell.h"
 
+//strContains return true if str contains string 1
 bool Shell::strContains(string &str, string string1)
 {
     unsigned long pos = str.find(string1);
@@ -12,6 +37,7 @@ bool Shell::strContains(string &str, string string1)
             pos != -1;
 }
 
+//trim removes white space before and after str
 string Shell::trim(string &str)
 {
     int startingIndex = 0, endingIndex = str.length() - 1;
@@ -33,6 +59,7 @@ string Shell::trim(string &str)
     return str.substr(startingIndex, (endingIndex - startingIndex) + 1);
 }
 
+//convert a C++ into a Cstyle string
 char *Shell::convert(string &str)
 {
     string cleanString = trim(str);
@@ -43,6 +70,7 @@ char *Shell::convert(string &str)
     return cStyleString;
 }
 
+//displayHistory all of the user inputed commands 
 void Shell::displayHistory()
 {
     if(commandHistory.empty())
@@ -52,6 +80,7 @@ void Shell::displayHistory()
             cout << i << " " << commandHistory[i].orginalCommandLine << endl;
 }
 
+//handleBuiltInCommands will handle the history, !N, and !! commands when the user inputs those
 bool Shell::handleBuiltInCommands(string &commandLine)
 {
     string cleanCommandLine = trim(commandLine);
@@ -93,6 +122,8 @@ bool Shell::handleBuiltInCommands(string &commandLine)
         return false;
 }
 
+//parseCommandAndOptions
+//Parses through the user input and grabs all of the options  
 CommandAndOptions Shell::parseCommandAndOptions(string &commandLine)
 {
     CommandAndOptions commandWithOptions;
@@ -125,6 +156,7 @@ CommandAndOptions Shell::parseCommandAndOptions(string &commandLine)
     return commandWithOptions;
 }
 
+//executeCommand will fork and grab the pid. Based off the pid, it will determine if the command is valid
 void Shell::executeCommand(CommandAndOptions &commandWithOptions)
 {
     //Don't execute a new command until some of the others have finished executing
@@ -152,6 +184,7 @@ void Shell::executeCommand(CommandAndOptions &commandWithOptions)
     }
 }
 
+//removeNewLines will check to make sure that there are not any accidental new lines in the user input
 string Shell::removeNewlines(string &commandLine)
 {
     string str = "";
@@ -166,6 +199,7 @@ string Shell::removeNewlines(string &commandLine)
     return str;
 }
 
+//processCommandLine: given a line from the shell, it parses the line and executes the line
 void Shell::processCommandLine(string &commandLine)
 {
     string cleanString = removeNewlines(commandLine);
@@ -178,6 +212,7 @@ void Shell::processCommandLine(string &commandLine)
 
 Shell::Shell() : nHistoryItemsMatcher("!(\\+)?[[:digit:]]+") {}
 
+//startNewShellSesion is our gui for this project
 void Shell::startNewShellSession()
 {
     string userInput = "";

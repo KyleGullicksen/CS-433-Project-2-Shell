@@ -1,3 +1,12 @@
+/*
+Created by Kyle Gullicksen and Benjamin Siegel
+Date Written: 9/25/2017
+Course: CS433
+Assignment #2
+
+CommandAndOptions.h
+*/
+
 #ifndef INC_2_COMMANDANDOPTIONS_H
 #define INC_2_COMMANDANDOPTIONS_H
 
