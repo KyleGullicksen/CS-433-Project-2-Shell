@@ -28,7 +28,10 @@ Shell.cpp; contains the implementations of all of our functions
 
 #include "Shell.h"
 
-//strContains return true if str contains string 1
+//strContains return true if str contains string 
+//Parameters: string &str, string string 1
+//Input: str, and string 1
+//Output: bool: true / false
 bool Shell::strContains(string &str, string string1)
 {
     unsigned long pos = str.find(string1);
@@ -38,6 +41,9 @@ bool Shell::strContains(string &str, string string1)
 }
 
 //trim removes white space before and after str
+//Parameters: string &str
+//Input: inputed string
+//Output: str[index]
 string Shell::trim(string &str)
 {
     int startingIndex = 0, endingIndex = str.length() - 1;
@@ -59,7 +65,10 @@ string Shell::trim(string &str)
     return str.substr(startingIndex, (endingIndex - startingIndex) + 1);
 }
 
-//convert a C++ into a Cstyle string
+//convert a C++ string into a Cstyle string
+//Parameters: string &str
+//Input: C++ string
+//Output: Cstyle string
 char *Shell::convert(string &str)
 {
     string cleanString = trim(str);
@@ -71,6 +80,9 @@ char *Shell::convert(string &str)
 }
 
 //displayHistory all of the user inputed commands 
+//Parameters: none
+//Input: User command
+//Output: All of the user input commands
 void Shell::displayHistory()
 {
     if(commandHistory.empty())
@@ -81,6 +93,9 @@ void Shell::displayHistory()
 }
 
 //handleBuiltInCommands will handle the history, !N, and !! commands when the user inputs those
+//Parameters: string &commandLine
+//Input: user command
+//Output: execute command or display history
 bool Shell::handleBuiltInCommands(string &commandLine)
 {
     string cleanCommandLine = trim(commandLine);
@@ -123,7 +138,10 @@ bool Shell::handleBuiltInCommands(string &commandLine)
 }
 
 //parseCommandAndOptions
-//Parses through the user input and grabs all of the options  
+//Parses through the user input and grabs all of the options
+//Parameters: string &commandLine
+//Input: user command
+//Output: commandWithOptions
 CommandAndOptions Shell::parseCommandAndOptions(string &commandLine)
 {
     CommandAndOptions commandWithOptions;
@@ -157,6 +175,9 @@ CommandAndOptions Shell::parseCommandAndOptions(string &commandLine)
 }
 
 //executeCommand will fork and grab the pid. Based off the pid, it will determine if the command is valid
+//Parameters: CommandAndOptions &commandWithOptions
+//Input: no input
+//Output: Appropritate output for user command
 void Shell::executeCommand(CommandAndOptions &commandWithOptions)
 {
     //Don't execute a new command until some of the others have finished executing
@@ -185,6 +206,9 @@ void Shell::executeCommand(CommandAndOptions &commandWithOptions)
 }
 
 //removeNewLines will check to make sure that there are not any accidental new lines in the user input
+//Parameters: string &commandLine
+//Input: string of user command
+//Output: string of user command - new lines
 string Shell::removeNewlines(string &commandLine)
 {
     string str = "";
@@ -199,7 +223,10 @@ string Shell::removeNewlines(string &commandLine)
     return str;
 }
 
-//processCommandLine: given a line from the shell, it parses the line and executes the line
+//processCommandLine: given a line from the shell, it parses the line and executes the 
+//Parameters: string &commandLine
+//Input: user command
+//Output: executeCommand
 void Shell::processCommandLine(string &commandLine)
 {
     string cleanString = removeNewlines(commandLine);
@@ -213,6 +240,9 @@ void Shell::processCommandLine(string &commandLine)
 Shell::Shell() : nHistoryItemsMatcher("!(\\+)?[[:digit:]]+") {}
 
 //startNewShellSesion is our gui for this project
+//Parameters: none
+//Input: User command
+//Output: processCommandLine
 void Shell::startNewShellSession()
 {
     string userInput = "";
