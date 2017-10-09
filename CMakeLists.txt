@@ -3,6 +3,6 @@ project(2)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp CommandAndOptions.cpp CommandAndOptions.h)
+set(SOURCE_FILES main.cpp CommandAndOptions.cpp CommandAndOptions.h Shell.cpp Shell.h)
 
 add_executable(2 ${SOURCE_FILES})
