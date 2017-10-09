@@ -33,7 +33,10 @@ private:
     int processCount = 0;
     int maxProcessCount = 50;
     int maxSleepCount = 5;
+    int maxHistoryItemsToDisplay = 10;
     regex nHistoryItemsMatcher;
+
+    string keepOnlyDigits(string & str);
 
 protected:
     bool strContains(string &str, string string1);

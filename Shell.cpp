@@ -28,6 +28,8 @@ Shell.cpp; contains the implementations of all of our functions
 
 #include "Shell.h"
 
+
+
 //strContains return true if str contains string 
 //Parameters: string &str, string string 1
 //Input: str, and string 1
@@ -86,10 +88,10 @@ char *Shell::convert(string &str)
 void Shell::displayHistory()
 {
     if(commandHistory.empty())
-        cout << "No commands have been executed!" << endl;
+        cout << "No commands in history" << endl;
     else
-        for(int i = commandHistory.size() - 1; i > -1; i--)
-            cout << i << " " << commandHistory[i].orginalCommandLine << endl;
+        for(int i = commandHistory.size() - 1, counter = 0; i > -1 && counter < maxHistoryItemsToDisplay; i--, counter++)
+            cout << (i + 1) << " " << commandHistory[i].orginalCommandLine << endl;
 }
 
 //handleBuiltInCommands will handle the history, !N, and !! commands when the user inputs those
@@ -102,12 +104,11 @@ bool Shell::handleBuiltInCommands(string &commandLine)
 
     if(cleanCommandLine == "!!") {
         if(commandHistory.empty()) {
-            cout << "No commands have been executed!" << endl;
+            cout << "No commands in history" << endl;
             return true;
         }
 
         CommandAndOptions mostRecentCommand = commandHistory.front();
-        cout << "Executing [" << mostRecentCommand.orginalCommandLine << "]" << endl;
         executeCommand(mostRecentCommand);
 
         return true;
@@ -116,16 +117,18 @@ bool Shell::handleBuiltInCommands(string &commandLine)
     {
         //These next two lines grab the number from !N
         //and converts it into the ascii number for N
-        char N = cleanCommandLine[1];
-        int numOfCommands = (int) N - 48;
+//        char N = cleanCommandLine[0];
+//        int numOfCommands = (int) N - 48;
+
+        int numOfCommands = 0;
+        istringstream (keepOnlyDigits(cleanCommandLine)) >> numOfCommands;
 
         if(commandHistory.size() < numOfCommands) {
-            cout << numOfCommands << " commands have not yet been executed!" << endl;
+            cout << "No such command in history" << endl;
             return true;
         }
 
         CommandAndOptions desiredCommand = commandHistory.at(numOfCommands - 1);
-        cout << "Executing [" << desiredCommand.orginalCommandLine << "]" << endl;
         executeCommand(desiredCommand);
 
         return true;
@@ -237,6 +240,7 @@ void Shell::processCommandLine(string &commandLine)
     }
 }
 
+//nHistoryItemsMatcher("!(\\+)?[[:digit:]]+") -> Accepts any string of this form: ! followed by any positive integer
 Shell::Shell() : nHistoryItemsMatcher("!(\\+)?[[:digit:]]+") {}
 
 //startNewShellSesion is our gui for this project
@@ -263,4 +267,17 @@ void Shell::startNewShellSession()
 
 Shell::~Shell()
 {
+}
+
+string Shell::keepOnlyDigits(string &str)
+{
+    string finalStr = "";
+
+    for(int index = 0; index < str.length(); ++index)
+    {
+        if(isdigit(str[index]))
+            finalStr.push_back(str[index]);
+    }
+
+    return finalStr;
 }

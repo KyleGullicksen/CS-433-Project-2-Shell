@@ -17,24 +17,32 @@
 		PARENT: 4
 
 4.
-	(a) A benefit of synchronous communication is that it allows a rendezvous between the sender and receiver. A benefit is also that it sends the message and resumes operation. A disadvantage is that it is more complicated since it requires kernel-level buffering.
+	(a) A benefit of synchronous communication is that it allows enables two threads to safely communicate (ie, between the sender and receiver).
+	An added benefit is that it also sends the any messages and resume operations in the expected order. A disadvantage is that it is more complicated since it requires kernel-level buffering,
+	and can lead to threads waiting for another thread to modify some shared data, incurring additional wait times.
 
-	(b) An advantage of automatic buffering is that is has unbounded capacity, being, the queue has an potentially unlimited length. Explicit buffering has the disadvantage of having a zero capacity, being, a maximum length of zero.
+	(b) An advantage of automatic buffering is that is has unbounded capacity (in theory; in actuality, this is limited by physical limits of course).
+	Explicit buffering has the disadvantage of having a zero capacity, being, a maximum length of zero.
 
-	(c)Send by copy can handle synchronization issues but it does not allow the receiver to change the state of the parameter. Send by reference, on the other hand, allows the receiver to alter the state of the parameter.
+	(c)Send by copy can handle synchronization issues but it does not allow the receiver to change the state of the parameter.
+	Send by reference, on the other hand, allows the receiver to alter the state of the parameter.
 
 	(d)A disadvantage of fixed-size messages are buffering but an advantage is that they are easier to implement at kernel-level. Variable-sized are more complex at kernel-level.
 
 5.
-	(a)5. The parent process forks and creates p1. Then another process from the parent is created, p2. Then, three processes, p3, p4, and p5 are created from the parent, p1, and p2 processes, after the if statement.
-	(b)2.  The processes p1 and p2 will create a thread since p2 is created inside the if statement and p1 is is executed in the if statement.
+	(a)5. The parent process forks and creates p1. Then another process from the parent is created, p2. Next, three processes, p3, p4, and p5 are created from the parent, p1. Next p2 executes, after the if statement.
+	(b)2.  The processes p1 and p2 will create a thread since p2 is created inside the if statement and p1 is executed in the if statement.
 
 6.  Line C = 5
 	Line P = 0
 
 7.
-	(a) There will be processors that are going to sit idle since the there are fewer kernels, and they can only take one process at a time
+	(a) Since there are fewer kernels than there are processors, and in this case each kernel can only execute a single processes, this means that
+	there will be processors that are idle.
 
-	(b) All of the processors are running concurrently with the number of kernel threads.
+	(b) In this case, the number of kernel threads is exactly equal to the number of hardware threads (including an hyperthreads).
+	This means that all of the processors are available to the system for processing, meaning that it is possible to utilize all of
+	the system's CPU resources.
 
-	(c)If there are more kernel threads than processors, and if there is a kernel thread that is ready to execute, it will be switched with any blocked kernel threads.
+	(C) If the situation arises that there are more kernel threads than physical hardware cores (hyperthreaded or physical), and one of of the currently executing kernel
+	threads has become blocked, then the currently blocked thread will be exchanged with on of the waiting reading kernel threads.
