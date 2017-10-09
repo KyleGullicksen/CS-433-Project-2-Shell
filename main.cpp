@@ -4,9 +4,9 @@ Date Written: 9/25/2017
 Course: CS433
 Assignment #2
 
-This program will imititate a shell. This user will input a shell
+This program will imitate a shell. This user will input a shell
     command, such as ls, or mkdir, etc. Then, the program will
-    process the user inputed command and execute it.
+    process the user inputted command and execute it.
 
     If the user enters a preset unique command, such as "!!"
     or "!N", where N is an integer then the program will handle
@@ -24,61 +24,50 @@ This program will imititate a shell. This user will input a shell
 
 #include <iostream>
 
-#include <string>
 #include <vector>
-#include <boost/algorithm/string.hpp>
-#include <stdlib.h>
-#include <ctype.h>
-#include <pthread.h>
 #include <deque>
 #include <sys/wait.h>
 #include <chrono>
 #include <thread>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <cstring>
-#include <cstdlib>
+#include <regex>
 
 #include "CommandAndOptions.h"
 
 using namespace std;
-
-#define MAX_ARG_LEN = 500
 
 //Initialization of the deque
 deque<CommandAndOptions> commandHistory;
 int processCount = 0;
 int maxProcessCount = 50;
 int maxSleepCount = 5;
+regex nHistoryItemsMatcher("!(\\+)?[[:digit:]]+");
 
-void executeCommand(CommandAndOptions & commandWithOptions);
+void executeCommand(CommandAndOptions &commandWithOptions);
 
-bool strContains(string & str, string string1)
+bool strContains(string &str, string string1)
 {
     unsigned long pos = str.find(string1);
 
     return
-        pos != -1;
+            pos != -1;
 }
 
-string trim(string & str)
+string trim(string &str)
 {
     int startingIndex = 0, endingIndex = str.length() - 1;
 
-    for(int index = 0; index < str.length(); ++index)
-    {
-        if(!isspace(str[index]))
-        {
+    for(int index = 0; index < str.length(); ++index) {
+        if(!isspace(str[index])) {
             startingIndex = index;
             break;
         }
     }
 
-    for(int index = str.length() - 1; index > -1; --index)
-    {
-        if(!isspace(str[index]))
-        {
+    for(int index = str.length() - 1; index > -1; --index) {
+        if(!isspace(str[index])) {
             endingIndex = index;
             break;
         }
@@ -88,12 +77,12 @@ string trim(string & str)
 }
 
 
-char * convert(string & str)
+char *convert(string &str)
 {
     string cleanString = trim(str);
 
-    char * cStyleString = new char[cleanString.length()];
-    std::strcpy (cStyleString, str.c_str());
+    char *cStyleString = new char[cleanString.length()];
+    std::strcpy(cStyleString, str.c_str());
 
     return cStyleString;
 }
@@ -118,17 +107,16 @@ that are defined in the homework problem, these commands
 are:
     exit- exits the program and brings the user back to their
         program or shell
-    !!- displays the most recently used user inputed command
+    !!- displays the most recently used user inputted command
         and executes it.
-    !N- displays the Nth used user inputed command and executs it
+    !N- displays the Nth used user inputted command and executes it
 
 */
-bool handleBuiltInCommands(string & commandLine)
+bool handleBuiltInCommands(string &commandLine)
 {
     string cleanCommandLine = trim(commandLine);
 
-    if(cleanCommandLine == "!!")
-    {
+    if(cleanCommandLine == "!!") {
         if(commandHistory.empty()) {
             cout << "No commands have been executed!" << endl;
             return true;
@@ -140,49 +128,44 @@ bool handleBuiltInCommands(string & commandLine)
 
         return true;
 
-    } else if(cleanCommandLine[0] == '!') //command is "!N"
+    } else if(regex_match(cleanCommandLine, nHistoryItemsMatcher)) //command is "!N"
     {
         //These next two lines grab the number from !N
         //and converts it into the ascii number for N
         char N = cleanCommandLine[1];
         int numOfCommands = (int) N - 48;
 
-        if(commandHistory.size() < numOfCommands)
-        {
+        if(commandHistory.size() < numOfCommands) {
             cout << numOfCommands << " commands have not yet been executed!" << endl;
             return true;
         }
 
-        cout << "numOfCommands: " << numOfCommands << endl;
         CommandAndOptions desiredCommand = commandHistory.at(numOfCommands - 1);
         cout << "Executing [" << desiredCommand.orginalCommandLine << "]" << endl;
         executeCommand(desiredCommand);
 
         return true;
 
-    } else if(strContains(cleanCommandLine, "history"))
-    {
+    } else if(strContains(cleanCommandLine, "history")) {
         displayHistory();
         return true;
-    }
-    else
+    } else
         return false;
 }
 
-CommandAndOptions parseCommandAndOptions(string & commandLine)
+CommandAndOptions parseCommandAndOptions(string &commandLine)
 {
     CommandAndOptions commandWithOptions;
     commandWithOptions.orginalCommandLine = commandLine;
 
-    char * commandLineCStyle = convert(commandLine);
+    char *commandLineCStyle = convert(commandLine);
     int i = 0;
 
-    char * p = strtok(commandLineCStyle, " ");
+    char *p = strtok(commandLineCStyle, " ");
 
-    while(p != NULL)
-    {
+    while(p != nullptr) {
         commandWithOptions.args[i] = p;
-        p = strtok(NULL, " ");
+        p = strtok(nullptr, " ");
         i++;
     }
 
@@ -191,10 +174,9 @@ CommandAndOptions parseCommandAndOptions(string & commandLine)
 
     if(ampPos != -1) {
         commandWithOptions.amp = true;
-        commandWithOptions.args[i - 1] = NULL;
-    } else
-    {
-        commandWithOptions.args[i] = NULL;
+        commandWithOptions.args[i - 1] = nullptr;
+    } else {
+        commandWithOptions.args[i] = nullptr;
         commandWithOptions.amp = false;
     }
 
@@ -204,7 +186,7 @@ CommandAndOptions parseCommandAndOptions(string & commandLine)
 }
 
 
-void executeCommand(CommandAndOptions & commandWithOptions)
+void executeCommand(CommandAndOptions &commandWithOptions)
 {
     //Don't execute a new command until some of the others have finished executing
     for(int currSleepCount = 0; processCount >= maxProcessCount && currSleepCount < maxSleepCount; currSleepCount++)
@@ -215,51 +197,41 @@ void executeCommand(CommandAndOptions & commandWithOptions)
 
     pid_t pid = fork();
 
-    if(pid == 0)
-    {
+    if(pid == 0) {
         execvp(commandWithOptions.command, commandWithOptions.args);
         processCount++;
         cout << "This command does not exit or invalid command." << endl;
         exit(1);
-    }
-
-    else if (pid > 0)
-    {
-        if(!commandWithOptions.amp)
-        {
-            wait(NULL);
+    } else if(pid > 0) {
+        if(!commandWithOptions.amp) {
+            wait(nullptr);
             processCount--;
         }
-    }
-
-    else
-    {
+    } else {
         cout << "Fork failed." << endl;
         exit(1);
     }
 }
 
-string removeNewlines(string & commandLine)
+string removeNewlines(string &commandLine)
 {
     string str = "";
 
-    for(int index = 0; index < commandLine.size(); ++index)
-    {
-        if(commandLine[index] == '\n' || commandLine[index] == '\r')
+    for(char c : commandLine) {
+        if(c == '\n' || c == '\r')
             continue;
 
-        str.push_back(commandLine[index]);
+        str.push_back(c);
     }
 
     return str;
 }
 
-void processCommandLine(string & commandLine)
+void processCommandLine(string &commandLine)
 {
     string cleanString = removeNewlines(commandLine);
 
-    if(!handleBuiltInCommands(commandLine))
-    {
+    if(!handleBuiltInCommands(commandLine)) {
         CommandAndOptions commandAndOptions = parseCommandAndOptions(commandLine);
         executeCommand(commandAndOptions);
     }
@@ -271,8 +243,7 @@ int main()
     string userInput = "";
     bool shouldAskForMoreInput = true;
 
-    while(shouldAskForMoreInput)
-    {
+    while(shouldAskForMoreInput) {
         cout << "osh> ";
         getline(cin, userInput);
 
@@ -280,9 +251,7 @@ int main()
         if(strContains(userInput, "exit")) {
             shouldAskForMoreInput = false;
             exit(0xBAD);
-        }
-        else
+        } else
             processCommandLine(userInput);
     }
-
 }
